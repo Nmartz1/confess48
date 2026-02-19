@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONFESS/48</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --black: #0a0a0a;
+    --dark: #111111;
+    --dark-card: #0e0e0e;
+    --terminal-green: #00ff88;
+    --terminal-green-dim: #00ff8822;
+    --red: #ff2222;
+    --red-dim: #ff222215;
+    --red-glow: #ff222244;
+    --amber: #ffaa00;
+    --white: #e0e0e0;
+    --gray: #555555;
+    --gray-light: #333333;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+    --serif: 'Instrument Serif', Georgia, serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--mono);
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* Scan lines */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 34, 34, 0.012) 2px,
+      rgba(255, 34, 34, 0.012) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* ═══════════ NAV ═══════════ */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+    background: rgba(10, 10, 10, 0.92);
+    border-bottom: 1px solid rgba(255, 34, 34, 0.12);
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-brand {
+    font-size: 11px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 700;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .nav-links a {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .nav-links a:hover { color: var(--red); }
+  .nav-links a.active { color: var(--red); }
+  .nav-links a.external::after { content: '↗'; margin-left: 4px; font-size: 8px; }
+
+  /* ═══════════ HERO ═══════════ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 120px 24px 60px;
+    position: relative;
+  }
+
+  .hero-warning {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--red);
+    margin-bottom: 48px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero-title {
+    font-size: clamp(56px, 12vw, 140px);
+    font-weight: 700;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    line-height: 0.9;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .hero-title .confess {
+    display: block;
+    background: linear-gradient(180deg, #ffffff 0%, #999999 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-title .slash-48 {
+    display: block;
+    font-size: clamp(40px, 8vw, 100px);
+    color: var(--red);
+    -webkit-text-fill-color: var(--red);
+    letter-spacing: 16px;
+    text-shadow: 0 0 40px var(--red-glow);
+  }
+
+  .hero-sub {
+    font-size: 13px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-top: 24px;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  .hero-countdown {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 48px;
+  }
+
+  .cd-block {
+    background: rgba(255, 34, 34, 0.08);
+    border: 1px solid rgba(255, 34, 34, 0.2);
+    padding: 16px 20px;
+    text-align: center;
+    min-width: 72px;
+  }
+
+  .cd-num {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--red);
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+
+  .cd-label {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-top: 8px;
+  }
+
+  .cd-sep {
+    font-size: 28px;
+    color: var(--red);
+    opacity: 0.4;
+    padding: 0 4px;
+    animation: pulse 1s infinite;
+  }
+
+  .hero-cta {
+    display: inline-block;
+    border: 1px solid var(--red);
+    padding: 16px 48px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--red);
+    text-decoration: none;
+    transition: all 0.3s;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .hero-cta:hover {
+    background: var(--red);
+    color: var(--black);
+    box-shadow: 0 0 30px var(--red-glow);
+  }
+
+  /* ═══════════ LATEST CONFESSIONS ═══════════ */
+  .confessions {
+    max-width: 1100px;
+    margin: 0 auto 120px;
+    padding: 0 24px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  .section-count {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--red);
+  }
+
+  .confessions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .confession-card {
+    background: var(--dark-card);
+    border: 1px solid rgba(255,255,255,0.04);
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .confession-card:hover {
+    border-color: rgba(255, 34, 34, 0.3);
+  }
+
+  /* Video placeholder (would be YouTube embeds in production) */
+  .confession-video {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #080808;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .confession-video::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(255,255,255,0.02) 1px,
+      rgba(255,255,255,0.02) 2px
+    );
+    pointer-events: none;
+  }
+
+  .play-icon {
+    width: 48px;
+    height: 48px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .confession-card:hover .play-icon {
+    border-color: var(--red);
+  }
+
+  .play-icon::after {
+    content: '';
+    display: block;
+    width: 0;
+    height: 0;
+    border-left: 14px solid rgba(255,255,255,0.3);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    margin-left: 4px;
+  }
+
+  .confession-card:hover .play-icon::after {
+    border-left-color: var(--red);
+  }
+
+  .confession-silhouette {
+    font-size: 9px;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+
+  .confession-meta {
+    padding: 16px;
+  }
+
+  .confession-id {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--red);
+    margin-bottom: 8px;
+  }
+
+  .confession-title {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--white);
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .confession-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 3px 8px;
+  }
+
+  .confession-time {
+    font-size: 9px;
+    color: var(--gray);
+    margin-top: 12px;
+    letter-spacing: 1px;
+  }
+
+  /* ═══════════ HOW IT WORKS ═══════════ */
+  .how-it-works {
+    max-width: 900px;
+    margin: 0 auto 120px;
+    padding: 0 24px;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+
+  .step {
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 32px 24px;
+    text-align: center;
+    background: rgba(255,255,255,0.01);
+    position: relative;
+  }
+
+  .step-num {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--red);
+    margin-bottom: 16px;
+    opacity: 0.6;
+  }
+
+  .step-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+
+  .step-desc {
+    font-size: 10px;
+    color: var(--gray);
+    line-height: 1.8;
+    letter-spacing: 0.3px;
+  }
+
+  /* ═══════════ SUBMIT SECTION ═══════════ */
+  .submit {
+    max-width: 700px;
+    margin: 0 auto 120px;
+    padding: 0 24px;
+  }
+
+  .submit-box {
+    border: 1px solid rgba(255, 34, 34, 0.25);
+    padding: 60px 48px;
+    text-align: center;
+    position: relative;
+    background: rgba(255, 34, 34, 0.02);
+  }
+
+  .submit-box::before {
+    content: 'SUBMIT YOUR CONFESSION';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--black);
+    padding: 0 16px;
+    font-size: 9px;
+    letter-spacing: 5px;
+    color: var(--red);
+    white-space: nowrap;
+  }
+
+  .submit-icon {
+    width: 64px;
+    height: 64px;
+    border: 2px solid rgba(255, 34, 34, 0.3);
+    border-radius: 50%;
+    margin: 0 auto 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .submit-icon-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--red);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  .submit-title {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-style: italic;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  .submit-sub {
+    font-size: 11px;
+    color: var(--gray);
+    line-height: 1.8;
+    margin-bottom: 32px;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+    letter-spacing: 0.3px;
+  }
+
+  .submit-options {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+
+  .submit-btn {
+    border: 1px solid rgba(255, 34, 34, 0.3);
+    background: rgba(255, 34, 34, 0.06);
+    padding: 14px 32px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .submit-btn:hover {
+    background: var(--red);
+    color: var(--black);
+    box-shadow: 0 0 20px var(--red-glow);
+  }
+
+  .submit-btn.primary {
+    background: var(--red);
+    color: var(--black);
+  }
+
+  .submit-btn.primary:hover {
+    background: transparent;
+    color: var(--red);
+  }
+
+  .submit-guarantee {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .guarantee-item {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .guarantee-check {
+    color: var(--terminal-green);
+    font-size: 11px;
+  }
+
+  /* ═══════════ VERIFIED BAR ═══════════ */
+  .verified-bar {
+    max-width: 700px;
+    margin: 0 auto 120px;
+    padding: 0 24px;
+    text-align: center;
+  }
+
+  .verified-text {
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  .verified-text span {
+    color: var(--amber);
+  }
+
+  /* ═══════════ DAWSON PROMPT ═══════════ */
+  .dawson-prompt {
+    max-width: 700px;
+    margin: 0 auto 120px;
+    text-align: center;
+    padding: 48px 24px;
+  }
+
+  .dawson-prompt::before,
+  .dawson-prompt::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+    margin: 0 auto 32px;
+  }
+
+  .dawson-prompt::after {
+    margin: 32px auto 0;
+  }
+
+  .dawson-prompt-text {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(13px, 2vw, 18px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    line-height: 2.4;
+    color: var(--white);
+  }
+
+  .dawson-prompt-text .red {
+    color: var(--red);
+  }
+
+  /* ═══════════ ECOSYSTEM STRIP ═══════════ */
+  .eco-strip {
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 24px 32px;
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-bottom: 0;
+  }
+
+  .eco-strip a {
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .eco-strip a:hover { color: var(--red); }
+
+  .eco-strip .divider {
+    color: rgba(255,255,255,0.08);
+  }
+
+  /* ═══════════ FOOTER ═══════════ */
+  .footer {
+    padding: 40px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .footer a {
+    color: rgba(255,255,255,0.15);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .footer a:hover { color: var(--red); }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 768px) {
+    .nav { padding: 12px 16px; }
+    .nav-links { gap: 12px; }
+    .nav-links a { font-size: 8px; }
+    .confessions-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .submit-options { flex-direction: column; align-items: center; }
+    .submit-guarantee { flex-direction: column; align-items: center; gap: 12px; }
+    .submit-box { padding: 40px 24px; }
+    .hero-countdown { flex-wrap: wrap; justify-content: center; }
+    .eco-strip { flex-wrap: wrap; gap: 16px; }
+    .footer { flex-direction: column; gap: 12px; text-align: center; }
+    .cd-block { min-width: 60px; padding: 12px 14px; }
+  }
+
+  /* Glitch */
+  .glitch {
+    animation: glitch 4s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 94%, 100% { text-shadow: none; }
+    95% { text-shadow: 3px 0 var(--red), -3px 0 var(--terminal-green); }
+    96% { text-shadow: -2px 0 var(--red), 2px 0 rgba(0,170,255,0.5); }
+    97% { text-shadow: none; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--red); }
+
+  ::selection {
+    background: var(--red);
+    color: var(--black);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">CONFESS/48</div>
+  <div class="nav-links">
+    <a href="#" class="active">Confessions</a>
+    <a href="#submit-section">Submit</a>
+    <a href="#" class="external">MindFile</a>
+    <a href="#" class="external">Luddites</a>
+    <a href="#" class="external">UniReborn</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-warning">● ACCEPTING CONFESSIONS — CLOCK ACTIVE</div>
+
+  <h1 class="hero-title glitch">
+    <span class="confess">Confess</span>
+    <span class="slash-48">/48</span>
+  </h1>
+
+  <p class="hero-sub">Confess before you're exposed</p>
+
+  <div class="hero-countdown">
+    <div class="cd-block">
+      <div class="cd-num" id="cd-hours">47</div>
+      <div class="cd-label">Hours</div>
+    </div>
+    <div class="cd-sep">:</div>
+    <div class="cd-block">
+      <div class="cd-num" id="cd-mins">59</div>
+      <div class="cd-label">Minutes</div>
+    </div>
+    <div class="cd-sep">:</div>
+    <div class="cd-block">
+      <div class="cd-num" id="cd-secs">47</div>
+      <div class="cd-label">Seconds</div>
+    </div>
+  </div>
+
+  <a href="#submit-section" class="hero-cta">Submit Your Confession</a>
+</section>
+
+<!-- LATEST CONFESSIONS -->
+<section class="confessions">
+  <div class="section-header">
+    <div class="section-title">— Latest Confessions —</div>
+    <div class="section-count" id="total-count">43,217 received</div>
+  </div>
+
+  <div class="confessions-grid">
+
+    <div class="confession-card">
+      <div class="confession-video">
+        <div class="play-icon"></div>
+        <div class="confession-silhouette">Face obscured</div>
+      </div>
+      <div class="confession-meta">
+        <div class="confession-id">MF-00147 · CONFESSION #001</div>
+        <div class="confession-title">"I've been embezzling $47,000 over three years from the company I helped build."</div>
+        <div class="confession-tags">
+          <span class="tag">Financial</span>
+          <span class="tag">Corporate</span>
+        </div>
+        <div class="confession-time">2 hours ago</div>
+      </div>
+    </div>
+
+    <div class="confession-card">
+      <div class="confession-video">
+        <div class="play-icon"></div>
+        <div class="confession-silhouette">Face obscured</div>
+      </div>
+      <div class="confession-meta">
+        <div class="confession-id">MF-00293 · CONFESSION #002</div>
+        <div class="confession-title">"My entire career is built on a degree I never earned. Fourteen years."</div>
+        <div class="confession-tags">
+          <span class="tag">Fraud</span>
+          <span class="tag">Education</span>
+        </div>
+        <div class="confession-time">4 hours ago</div>
+      </div>
+    </div>
+
+    <div class="confession-card">
+      <div class="confession-video">
+        <div class="play-icon"></div>
+        <div class="confession-silhouette">Face obscured</div>
+      </div>
+      <div class="confession-meta">
+        <div class="confession-id">MF-00412 · CONFESSION #003</div>
+        <div class="confession-title">"I've been having an emotional affair for six months. My wife has no idea."</div>
+        <div class="confession-tags">
+          <span class="tag">Personal</span>
+          <span class="tag">Infidelity</span>
+        </div>
+        <div class="confession-time">5 hours ago</div>
+      </div>
+    </div>
+
+    <div class="confession-card">
+      <div class="confession-video">
+        <div class="play-icon"></div>
+        <div class="confession-silhouette">Face obscured</div>
+      </div>
+      <div class="confession-meta">
+        <div class="confession-id">MF-00518 · CONFESSION #004</div>
+        <div class="confession-title">"I witnessed something at work that I should have reported. I stayed quiet. Someone got hurt."</div>
+        <div class="confession-tags">
+          <span class="tag">Workplace</span>
+          <span class="tag">Cover-up</span>
+        </div>
+        <div class="confession-time">7 hours ago</div>
+      </div>
+    </div>
+
+    <div class="confession-card">
+      <div class="confession-video">
+        <div class="play-icon"></div>
+        <div class="confession-silhouette">Face obscured</div>
+      </div>
+      <div class="confession-meta">
+        <div class="confession-id">MF-00631 · CONFESSION #005</div>
+        <div class="confession-title">"I took credit for my colleague's research. It got me promoted. She left the field."</div>
+        <div class="confession-tags">
+          <span class="tag">Academic</span>
+          <span class="tag">Theft</span>
+        </div>
+        <div class="confession-time">9 hours ago</div>
+      </div>
+    </div>
+
+    <div class="confession-card">
+      <div class="confession-video">
+        <div class="play-icon"></div>
+        <div class="confession-silhouette">Face obscured</div>
+      </div>
+      <div class="confession-meta">
+        <div class="confession-id">MF-00744 · CONFESSION #006</div>
+        <div class="confession-title">"I've been sober for two years according to everyone who knows me. I haven't been sober for a single day."</div>
+        <div class="confession-tags">
+          <span class="tag">Personal</span>
+          <span class="tag">Addiction</span>
+        </div>
+        <div class="confession-time">11 hours ago</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works">
+  <div class="section-header">
+    <div class="section-title">— How It Works —</div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Record</div>
+      <div class="step-desc">Upload a video or record via webcam. Say what you need to say.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Protect</div>
+      <div class="step-desc">Face automatically blurred. Voice automatically altered. Identity protected.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Log</div>
+      <div class="step-desc">Confession assigned file ID. Logged in the system. Timestamp recorded.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Publish</div>
+      <div class="step-desc">Reviewed and posted. Anonymous. Permanent. Before the clock runs out.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SUBMIT -->
+<section class="submit" id="submit-section">
+  <div class="submit-box">
+    <div class="submit-icon">
+      <div class="submit-icon-dot"></div>
+    </div>
+
+    <div class="submit-title">Your turn.</div>
+    <div class="submit-sub">Record your confession before the countdown expires. Face blur and voice alteration are automatic. No one will know it's you.</div>
+
+    <div class="submit-options">
+      <button class="submit-btn primary" onclick="handleSubmit('upload')">Upload Video</button>
+      <button class="submit-btn" onclick="handleSubmit('record')">Record Now</button>
+    </div>
+
+    <div class="submit-guarantee">
+      <div class="guarantee-item"><span class="guarantee-check">✓</span> Face blurred</div>
+      <div class="guarantee-item"><span class="guarantee-check">✓</span> Voice altered</div>
+      <div class="guarantee-item"><span class="guarantee-check">✓</span> Anonymous</div>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFIED BAR -->
+<div class="verified-bar">
+  <div class="verified-text">Verified by <span>surveillance data</span> · Part of the <a href="#" style="color: var(--amber); text-decoration: none;">MindFile</a> ecosystem</div>
+</div>
+
+<!-- DAWSON PROMPT -->
+<section class="dawson-prompt">
+  <div class="dawson-prompt-text">
+    THE FILES HAVE BEEN COMPILED.<br>
+    CONFESSION IS <span class="red">VOLUNTARY</span>.<br>
+    EXPOSURE IS <span class="red">NOT</span>.<br>
+    <br>
+    THE CLOCK IS RUNNING.
+  </div>
+</section>
+
+<!-- ECOSYSTEM STRIP -->
+<div class="eco-strip">
+  <a href="#">MindFile</a>
+  <span class="divider">|</span>
+  <a href="#">Confess/48</a>
+  <span class="divider">|</span>
+  <a href="#">The Luddites</a>
+  <span class="divider">|</span>
+  <a href="#">Uni Reborn</a>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div>Confess/48 · Disclosure Program</div>
+  <div><a href="#">Part of the MindFile ecosystem — Learn more →</a></div>
+  <div>All confessions verified · All files compiled</div>
+</footer>
+
+<!-- SCRIPTS -->
+<script>
+  // Countdown
+  (function() {
+    let h = 47, m = 59, s = 47;
+    setInterval(() => {
+      s--;
+      if (s < 0) { s = 59; m--; }
+      if (m < 0) { m = 59; h--; }
+      if (h < 0) { h = 47; m = 59; s = 59; }
+      document.getElementById('cd-hours').textContent = String(h).padStart(2,'0');
+      document.getElementById('cd-mins').textContent = String(m).padStart(2,'0');
+      document.getElementById('cd-secs').textContent = String(s).padStart(2,'0');
+    }, 1000);
+  })();
+
+  // Confession counter
+  (function() {
+    const el = document.getElementById('total-count');
+    let count = 43217;
+    setInterval(() => {
+      count += Math.floor(Math.random() * 3);
+      el.textContent = count.toLocaleString() + ' received';
+    }, 5000);
+  })();
+
+  // Submit interaction (mockup only)
+  function handleSubmit(type) {
+    const box = document.querySelector('.submit-box');
+    const title = document.querySelector('.submit-title');
+    const sub = document.querySelector('.submit-sub');
+    const opts = document.querySelector('.submit-options');
+    const guarantees = document.querySelector('.submit-guarantee');
+
+    title.textContent = 'Confession logged.';
+    title.style.color = '#ff2222';
+    sub.innerHTML = 'File ID: <strong style="color: var(--red); letter-spacing: 3px;">MF-' +
+      String(Math.floor(Math.random()*99999)).padStart(5,'0') +
+      '</strong><br><br><span style="font-size: 10px; color: var(--gray);">Your confession will be reviewed, processed, and published anonymously.</span>';
+    opts.style.display = 'none';
+    guarantees.style.display = 'none';
+
+    setTimeout(() => {
+      title.textContent = 'Your turn.';
+      title.style.color = 'var(--white)';
+      sub.textContent = 'Record your confession before the countdown expires. Face blur and voice alteration are automatic. No one will know it\'s you.';
+      opts.style.display = 'flex';
+      guarantees.style.display = 'flex';
+    }, 4000);
+  }
+</script>
+
+</body>
+</html>
